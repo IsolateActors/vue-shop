@@ -80,7 +80,7 @@ export default {
       this.$refs.resetLoginRef.validate(async (valid) => {
         console.log(valid)
         if (!valid) return
-        const { data: res } = await this.$axios.post('login', this.loginForm)
+        const { data: res } = await this.$axios.post('/login', this.loginForm)
         console.log(res)
         if (res.meta.status !== 200)
           return this.$message({
