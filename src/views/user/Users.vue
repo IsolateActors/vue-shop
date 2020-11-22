@@ -12,12 +12,20 @@
       <!-- 搜索区 -->
       <el-row :gutter="20">
         <el-col :span="8">
-          <el-input placeholder="请输入内容" class="input-with-select">
+          <el-input
+            placeholder="请输入内容"
+            class="input-with-select"
+            v-model="queryInfo.query"
+            @change="search"
+            clearable
+          >
             <el-button slot="append" icon="el-icon-search"></el-button>
           </el-input>
         </el-col>
         <el-col :span="4">
-          <el-button type="primary">主要按钮</el-button>
+          <el-button type="primary" @click="addDialogVisible = true"
+            >添加用户</el-button
+          >
         </el-col>
       </el-row>
 
@@ -30,18 +38,130 @@
         <el-table-column prop="role_name" label="角色"> </el-table-column>
         <el-table-column label="状态">
           <template v-slot="scope">
-            <el-switch v-model="scope.row.mg_state"> </el-switch>
+            <el-switch
+              v-model="scope.row.mg_state"
+              @change="userStateChange(scope.row)"
+            >
+            </el-switch>
           </template>
         </el-table-column>
-        <el-table-column label="操作"> </el-table-column>
+        <el-table-column label="操作" width="180px">
+          <template v-slot="">
+            <el-button
+              type="primary"
+              icon="el-icon-edit"
+              size="mini"
+            ></el-button>
+            <el-button
+              type="danger"
+              icon="el-icon-delete"
+              size="mini"
+            ></el-button>
+            <el-tooltip
+              class="item"
+              effect="light"
+              content="分配权限"
+              placement="top"
+              :enterable="false"
+            >
+              <el-button
+                type="warning"
+                icon="el-icon-setting"
+                size="mini"
+              ></el-button>
+            </el-tooltip>
+          </template>
+        </el-table-column>
       </el-table>
+
+      <!-- 分页 -->
+      <el-pagination
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        :current-page="queryInfo.pagenum"
+        :page-sizes="[1, 2, 5, 10]"
+        :page-size="queryInfo.pagesize"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="total"
+      >
+      </el-pagination>
     </el-card>
+
+    <!-- 添加用户对话框 -->
+    <el-dialog
+      title="添加用户"
+      :visible.sync="addDialogVisible"
+      width="50%"
+      @closed="addDialogClosed"
+    >
+      <!-- 内容主体 -->
+      <el-form
+        :model="addUserForm"
+        :rules="addUserFormRules"
+        ref="addUserFormRef"
+        label-width="70px"
+      >
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="addUserForm.username"></el-input>
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+          <el-input v-model="addUserForm.password"></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="addUserForm.email"></el-input>
+        </el-form-item>
+        <el-form-item label="手机" prop="mobile">
+          <el-input v-model="addUserForm.mobile"></el-input>
+        </el-form-item>
+      </el-form>
+      <!-- 底部 -->
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="addDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="addUser">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 export default {
   data() {
+    //   自定义邮箱验证规则
+    var validateEmail = (rule, value, callback) => {
+      const regEmail = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/
+      if (!value) {
+        return callback(new Error('邮箱不能为空'))
+      }
+      setTimeout(() => {
+        if (regEmail.test(value)) {
+          callback()
+        } else {
+          callback(new Error('请输入正确的邮箱格式'))
+        }
+      }, 100)
+    }
+    // 自定义手机验证规则
+    var checkPhone = (rule, value, callback) => {
+      const phoneReg = /^1[3|4|5|7|8][0-9]{9}$/
+      if (!value) {
+        return callback(new Error('电话号码不能为空'))
+      }
+      setTimeout(() => {
+        // Number.isInteger是es6验证数字是否为整数的方法,但是我实际用的时候输入的数字总是识别成字符串
+        // 所以我就在前面加了一个+实现隐式转换
+
+        if (!Number.isInteger(+value)) {
+          callback(new Error('请输入数字值'))
+        } else {
+          if (phoneReg.test(value)) {
+            callback()
+          } else {
+            callback(new Error('电话号码格式不正确'))
+          }
+        }
+      }, 100)
+    }
+
     return {
       queryInfo: {
         query: '',
@@ -50,7 +170,36 @@ export default {
       },
 
       userlist: [],
-      total: 0
+      total: 0,
+
+      //   添加用户对话框
+      addDialogVisible: false,
+
+      // 添加用户表单
+      addUserForm: {
+        username: '',
+        password: '',
+        email: '',
+        mobile: ''
+      },
+      addUserFormRules: {
+        username: [
+          { required: true, message: '请输入用户名', trigger: 'blur' },
+          { min: 3, max: 10, message: '长度在 3 到 10 个字符', trigger: 'blur' }
+        ],
+        password: [
+          { required: true, message: '请输入密码', trigger: 'blur' },
+          { min: 6, max: 15, message: '长度在 6 到 15 个字符', trigger: 'blur' }
+        ],
+        email: [
+          { required: true, message: '请输入邮箱', trigger: 'blur' },
+          { validator: validateEmail, trigger: 'blur' }
+        ],
+        mobile: [
+          { required: true, message: '请输入手机号', trigger: 'blur' },
+          { validator: checkPhone, trigger: 'blur' }
+        ]
+      }
     }
   },
   methods: {
@@ -62,8 +211,63 @@ export default {
       if (res.meta.status !== 200)
         return this.$message.error('获取用户列表失败！')
 
+      console.log(res)
       this.userlist = res.data.users
-      this.total = res.data.totalpage
+      this.total = res.data.total
+    },
+    // pagesize 改变
+    handleSizeChange(newSize) {
+      console.log(newSize)
+      this.queryInfo.pagesize = newSize
+      this.getUserList()
+    },
+    // 页码改变
+    handleCurrentChange(newPage) {
+      console.log(newPage)
+      this.queryInfo.pagenum = newPage
+      this.getUserList()
+    },
+
+    // 状态修改
+    async userStateChange(userInfo) {
+      console.log(userInfo)
+      const { data: res } = await this.$axios.put(
+        `users/${userInfo.id}/state/${userInfo.mg_state}`
+      )
+
+      if (res.meta.status !== 200) {
+        //   失败修改回原来状态
+        userInfo.mg_state = !userInfo.mg_state
+        return this.$message.error('更新用户状态失败！')
+      }
+      this.$message.success('更新用户状态成功！')
+    },
+
+    // 搜索
+    search() {
+      this.queryInfo.pagenum = 1
+      this.getUserList()
+    },
+
+    // 对话框关闭初始化
+    addDialogClosed() {
+      this.$refs.addUserFormRef.resetFields()
+    },
+
+    // 添加用户
+    addUser() {
+      this.$refs.addUserFormRef.validate(async (valid) => {
+        console.log(valid)
+        if (!valid) return
+        // 发起请求
+        const { data: res } = await this.$axios.post('/users', this.addUserForm)
+        console.log(res)
+        if (res.meta.status !== 201) {
+          return this.$message.error('添加用户失败!')
+        }
+        this.addDialogVisible = false
+        this.$message.success('添加用户成功!')
+      })
     }
   },
   created() {
