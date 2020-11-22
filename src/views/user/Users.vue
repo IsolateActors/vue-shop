@@ -46,16 +46,18 @@
           </template>
         </el-table-column>
         <el-table-column label="操作" width="180px">
-          <template v-slot="">
+          <template v-slot="scope">
             <el-button
               type="primary"
               icon="el-icon-edit"
               size="mini"
+              @click="showEditDialog(scope.row.id)"
             ></el-button>
             <el-button
               type="danger"
               icon="el-icon-delete"
               size="mini"
+              @click="removeUserById(scope.row.id)"
             ></el-button>
             <el-tooltip
               class="item"
@@ -120,6 +122,37 @@
         <el-button type="primary" @click="addUser">确 定</el-button>
       </span>
     </el-dialog>
+
+    <!-- 修改用户对话框 -->
+    <el-dialog
+      title="修改用户"
+      :visible.sync="editDialogVisible"
+      width="50%"
+      @closed="editDialogClosed"
+    >
+      <!-- 内容主体 -->
+      <el-form
+        :model="editUserForm"
+        :rules="addUserFormRules"
+        ref="editUserFormRef"
+        label-width="70px"
+      >
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="editUserForm.username" disabled></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="editUserForm.email"></el-input>
+        </el-form-item>
+        <el-form-item label="手机" prop="mobile">
+          <el-input v-model="editUserForm.mobile"></el-input>
+        </el-form-item>
+      </el-form>
+      <!-- 底部 -->
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="editDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="editUser">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -174,6 +207,8 @@ export default {
 
       //   添加用户对话框
       addDialogVisible: false,
+      //   修改用户对话框
+      editDialogVisible: false,
 
       // 添加用户表单
       addUserForm: {
@@ -199,7 +234,10 @@ export default {
           { required: true, message: '请输入手机号', trigger: 'blur' },
           { validator: checkPhone, trigger: 'blur' }
         ]
-      }
+      },
+
+      //   修改用户查询信息
+      editUserForm: {}
     }
   },
   methods: {
@@ -249,7 +287,7 @@ export default {
       this.getUserList()
     },
 
-    // 对话框关闭初始化
+    // 添加用户对话框关闭初始化
     addDialogClosed() {
       this.$refs.addUserFormRef.resetFields()
     },
@@ -268,6 +306,75 @@ export default {
         this.addDialogVisible = false
         this.$message.success('添加用户成功!')
       })
+    },
+
+    // 修改用户对话框
+    async showEditDialog(id) {
+      console.log(id)
+
+      const { data: res } = await this.$axios.get(`/users/${id}`)
+      console.log(res)
+      if (res.meta.status !== 200)
+        return this.$message.error('查询用户信息失败！')
+
+      this.editUserForm = res.data
+      this.editDialogVisible = true
+    },
+    // 修改用户
+    editUser() {
+      this.$refs.editUserFormRef.validate(async (valid) => {
+        if (!valid) return
+        // 发起修改请求
+        const { data: res } = await this.$axios.put(
+          `/users/${this.editUserForm.id}`,
+          {
+            email: this.editUserForm.email,
+            mobile: this.editUserForm.mobile
+          }
+        )
+
+        if (res.meta.status !== 200) {
+          return this.$message.error('更新用户失败！')
+        }
+
+        // 关闭对话框
+        this.editDialogVisible = false
+        // 刷新列表数据
+        this.getUserList()
+        // 提示修改成功
+        this.$message.success('更新用户成功！')
+      })
+    },
+
+    // 关闭弹框进行初始化
+    editDialogClosed() {
+      this.$refs.editUserFormRef.resetFields()
+    },
+
+    // 删除用户信息
+    removeUserById(id) {
+      console.log(id)
+      this.$confirm('此操作将永久删除该用户, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+        .then(async () => {
+          const { data: res } = await this.$axios.delete(`/users/${id}`)
+          if (res.meta.status !== 200) return this.message.error('删除失败！')
+          this.getUserList()
+
+          this.$message({
+            type: 'success',
+            message: '删除成功!'
+          })
+        })
+        .catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消删除'
+          })
+        })
     }
   },
   created() {
