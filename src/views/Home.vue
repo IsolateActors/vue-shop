@@ -104,7 +104,9 @@ export default {
     },
     goHome() {
       this.activePath = ''
-      this.$router.replace('/home')
+      if (this.$route.path !== '/welcome') {
+        this.$router.replace('/home')
+      }
     },
     saveNavState(activePath) {
       this.activePath = activePath
