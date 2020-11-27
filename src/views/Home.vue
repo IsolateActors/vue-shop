@@ -84,9 +84,6 @@ export default {
     this.getMenuList()
 
     this.activePath = window.sessionStorage.getItem('activePath')
-    // 不同才添加
-    console.log(this.$route.path)
-    if (this.activePath !== this.$route.path) this.$router.push(this.activePath)
   },
   methods: {
     logout() {

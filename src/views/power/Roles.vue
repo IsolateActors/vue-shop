@@ -199,7 +199,7 @@ export default {
         children: 'children',
         label: 'authName'
       },
-      //   默认展开的节点的 key 的数组
+      //   默认展开选中的节点的 key 的数组
       defKey: [],
       // 当前分配角色id
       currentRoleId: '',
@@ -328,9 +328,9 @@ export default {
         })
     },
 
-    // 根据id删除响应权限
+    // 根据id删除相应权限
     romoveRightsById(role, rightsId) {
-      this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
+      this.$confirm('此操作将永久删除该权限, 是否继续?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
@@ -370,6 +370,7 @@ export default {
       this.rightslist = res.data
       // 递归遍历角色三级权限获取id
       this.getLeafKeys(role, this.defKey)
+      console.log(this.defKey)
       this.setRightDialogVisible = true
     },
 
