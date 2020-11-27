@@ -121,7 +121,7 @@ export default {
       paramsObj: {
         type: 3,
         pagenum: 1,
-        pagesize: 10
+        pagesize: 5
       },
 
       //   总数
