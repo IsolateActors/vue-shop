@@ -113,13 +113,12 @@
                     size="mini"
                     v-model="item.select_attr_vals"
                   >
-                    <el-col
+                    <el-checkbox
                       v-for="(childItem, childindex) in item.attr_vals"
                       :key="childindex"
-                      :span="7"
-                    >
-                      <el-checkbox :label="childItem" border></el-checkbox>
-                    </el-col>
+                      :label="childItem"
+                      border
+                    ></el-checkbox>
                   </el-checkbox-group>
                 </el-form-item>
               </el-col>

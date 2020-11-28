@@ -7,6 +7,8 @@ import TreeTable from 'vue-table-with-tree-grid'
 import VueQuillEditor from 'vue-quill-editor'
 
 Vue.config.productionTip = false
+// 引入mock
+import './utils/mock'
 
 // 富文本
 import 'quill/dist/quill.core.css' // import styles
