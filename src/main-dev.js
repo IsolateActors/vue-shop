@@ -16,6 +16,9 @@ import 'quill/dist/quill.snow.css' // for snow theme
 import 'quill/dist/quill.bubble.css' // for bubble theme
 Vue.use(VueQuillEditor /* { default global options } */)
 
+// 进度条样式
+import 'nprogress/nprogress.css'
+
 import axios from './utils/axiosConfig'
 Vue.prototype.$axios = axios
 

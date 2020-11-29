@@ -3,7 +3,7 @@
     <!-- 头部 -->
     <el-header>
       <div class="logo">
-        <img src="../assets/logo.png" alt="" />
+        <img src="@/assets/logo.png" alt="" />
         <span @click="goHome">电商后台管理</span>
       </div>
       <el-button icon="el-icon-switch-button" size="mini" round @click="logout"
@@ -133,6 +133,9 @@ export default {
 
     img {
       height: 100%;
+      border-radius: 50%;
+      background-color: #eee;
+      margin-left: 10px;
     }
     span {
       margin-left: 15px;
